@@ -1,0 +1,103 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta http-equiv="X-UA-Compatible" content="ie=edge" />
+    <title>Document</title>
+  </head>
+  <body>
+    <canvas id="canvas" width="600" height="600"></canvas>
+    <img
+      id="img"
+      src="https://gimg2.baidu.com/image_search/src=http%3A%2F%2Fp0.qhimg.com%2Ft018be05be3045a6e22.jpg&refer=http%3A%2F%2Fp0.qhimg.com&app=2002&size=f9999,10000&q=a80&n=0&g=0n&fmt=jpeg?sec=1616853256&t=02be9936cbb0105d7104f3bb22338032"
+    />
+    <script type="text/javascript">
+      const canvas = document.getElementById("canvas");
+      const img = document.getElementById("img");
+      img.style.visibility = "hidden";
+      // // 纸
+      const ctx = canvas.getContext("2d");
+      let startPoint;
+      let isClick = false;
+      // 将图片画到画布上
+      img.onload = function() {
+        canvas.width = img.width;
+        canvas.height = img.height;
+        // 绘制图片 (0,0)开始1:1绘制img
+        // ctx.drawImage(img,x,y,width,height);
+        ctx.drawImage(img, 0, 0, img.width, img.height);
+        // 实现画框功能
+        canvas.addEventListener("mousedown", onMouseDown);
+        canvas.addEventListener("mousemove", onMouseMove);
+        canvas.addEventListener("mouseup", onMouseUp);
+      };
+
+      function getPointOnCanvas(canvas, x, y) {
+        return {
+          x: x - canvas.offsetLeft,
+          y: y - canvas.offsetTop
+        };
+      }
+
+      function onMouseDown(e) {
+        const x = e.clientX;
+        const y = e.clientY;
+        isClick = true;
+        // 获取起点
+        startPoint = getPointOnCanvas(canvas, x, y);
+        ctx.beginPath();
+        ctx.moveTo(startPoint.x, startPoint.y);
+      }
+
+      function getRectParam(curPoint) {
+        if (startPoint) {
+          const _w = curPoint.x - startPoint.x;
+          const _h = curPoint.y - startPoint.y;
+          // NOTE:  _w,_h 为负数时则向相反方向画
+          console.log(_w, _h);
+          return {
+            _startPoint: startPoint,
+            _w,
+            _h
+          };
+        }
+      }
+      function drawRect(curPoint) {
+        // 获取需要绘制矩形的参数
+        const newRect = getRectParam(curPoint);
+        // 先清空再重画
+        canvas.width = img.width;
+        canvas.height = img.height;
+        ctx.drawImage(img, 0, 0, img.width, img.height);
+        if (newRect) {
+          ctx.beginPath();
+          // 绘制矩形
+          ctx.strokeRect(
+            newRect._startPoint.x,
+            newRect._startPoint.y,
+            newRect._w,
+            newRect._h
+          );
+          ctx.closePath();
+        }
+      }
+
+      function onMouseMove(e) {
+        const x = e.clientX;
+        const y = e.clientY;
+        const curPoint = getPointOnCanvas(canvas, x, y);
+        if (isClick) {
+          drawRect(curPoint);
+        }
+      }
+
+      function onMouseUp(e) {
+        isClick = false;
+      }
+
+      // canvas 转图片
+      const dataURL = canvas.toDataURL("image/png");
+    </script>
+  </body>
+</html>
