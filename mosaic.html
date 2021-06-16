@@ -1,0 +1,105 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta http-equiv="X-UA-Compatible" content="ie=edge" />
+    <title>Document</title>
+  </head>
+  <body>
+    <img src="./image/gaoqing_suoping-007.jpeg" alt="" />
+    <button onclick="generateCanvas()">生成 canvas</button>
+    <button onclick="generateImage()">生成图片</button>
+  </body>
+
+  <script>
+    function generateCanvas() {
+      const btn = document.querySelector("button");
+      const img = new Image();
+      img.src = "./image/gaoqing_suoping-007.jpeg";
+      img.onload = function() {
+        const width = img.width;
+        const height = img.height;
+        const { canvas, ctx } = createCanvasAndCtx(width, height);
+        ctx.drawImage(this, 0, 0, width, height);
+        document.body.insertBefore(canvas, btn);
+      };
+    }
+    function createCanvasAndCtx(width, height) {
+      const canvas = document.createElement("canvas");
+      canvas.width = width;
+      canvas.height = height;
+      canvas.onmousedown = start;
+      canvas.onmouseout = end;
+      canvas.onmouseup = end;
+      const ctx = canvas.getContext("2d");
+      return { canvas, ctx };
+    }
+
+    function end() {
+      const canvas = document.querySelector("canvas");
+      canvas.onmousemove = null;
+    }
+
+    function start() {
+      const canvas = document.querySelector("canvas");
+      const img = document.querySelector("img");
+      const ctx = canvas.getContext("2d");
+      const imageData = ctx.getImageData(
+        0,
+        0,
+        img.clientWidth,
+        img.clientHeight
+      );
+      canvas.onmousemove = e => {
+        const w = imageData.width;
+        const h = imageData.height;
+        // 马赛克程度 数字越大越模糊 (马赛克的块越大)
+        const num = 10;
+        // 获取鼠标所在当前像素的RGBA
+        const color = getXY(imageData, e.offsetX, e.offsetY);
+        for (let k = 0; k < num; k++) {
+          for (let l = 0; l < num; l++) {
+            //设置imgData上坐标为(e.offsetX + l, e.offsetY + k)的的颜色
+            setXY(imageData, e.offsetX + l, e.offsetY + k, color);
+          }
+        }
+        // 更新imageData数据
+
+        ctx.putImageData(imageData, 0, 0);
+      };
+    }
+
+    function setXY(imageData, x, y, color) {
+      const w = imageData.width;
+      const h = imageData.height;
+      const d = imageData.data;
+      // imageData.data : Uint8ClampedArray 描述了一个一维数组，包含以 RGBA 顺序的数据，数据使用 0 至 255（包含）的整数表示。
+      // 存储数据的方式是从左到右，从上到下依次次，RGBA 依次4 个值， 所以数组总长度应该是 w * h * 4, 所以 如果需要获取鼠标x, y 位置
+      // 所在的color信息，则在data数组中的位置实际是 R = (y * w + x) * 4 G = (y * w + x) * 4 + 1 B = (y * w + x) * 4 + 2 A = (y * w + x) * 4 + 3
+      imageData.data[4 * (y * w + x)] = color[0];
+      imageData.data[4 * (y * w + x) + 1] = color[1];
+      imageData.data[4 * (y * w + x) + 2] = color[2];
+      imageData.data[4 * (y * w + x) + 3] = color[3];
+    }
+
+    function getXY(obj, x, y) {
+      var w = obj.width;
+      var h = obj.height;
+      var d = obj.data;
+      var color = [];
+      color[0] = obj.data[4 * (y * w + x)];
+      color[1] = obj.data[4 * (y * w + x) + 1];
+      color[2] = obj.data[4 * (y * w + x) + 2];
+      color[3] = obj.data[4 * (y * w + x) + 3];
+      return color;
+    }
+
+    function generateImage() {
+      const canvas = document.querySelector("canvas");
+      const newImg = new Image();
+      newImg.src = canvas.toDataURL("image/png");
+      document.body.insertBefore(newImg, canvas);
+    }
+  </script>
+</html>
